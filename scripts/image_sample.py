@@ -19,6 +19,7 @@ from improved_diffusion.script_util import (
     args_to_dict,
 )
 
+seedn = int(os.environ.get("MANUAL_SEED"))
 
 def main():
     args = create_argparser().parse_args()
@@ -39,12 +40,23 @@ def main():
     logger.log("sampling...")
     all_images = []
     all_labels = []
+
     while len(all_images) * args.batch_size < args.num_samples:
+        print("len(allims)", len(all_images))
+
         model_kwargs = {}
+        th.manual_seed(seedn)
+        print(f"Torch manual seed set to: {seedn}")
+        ival = int(os.environ.get("ival"))
+        kval = int(os.environ.get("kval"))
+
         if args.class_cond:
-            classes = th.randint(
-                low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
-            )
+            #classes = th.randint(
+            #    low=0, high=NUM_CLASSES, size=(args.batch_size,), device=dist_util.dev()
+            #)
+            i = ival
+            k = kval
+            classes = th.tensor([[i-1, k-1+11]]).to(dist_util.dev())
             model_kwargs["y"] = classes
         sample_fn = (
             diffusion.p_sample_loop if not args.use_ddim else diffusion.ddim_sample_loop
