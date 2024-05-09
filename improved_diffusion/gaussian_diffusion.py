@@ -7,6 +7,7 @@ Docstrings have been added, as well as DDIM sampling and a new collection of bet
 
 import enum
 import math
+import os 
 
 import numpy as np
 import torch as th
@@ -689,8 +690,19 @@ class GaussianDiffusion:
         """
         if model_kwargs is None:
             model_kwargs = {}
+        noisecopy = True
+        
+        initial_cond_grouping = os.environ.get("INITIAL_COND_GROUPING")
+        
         if noise is None:
-            noise = th.randn_like(x_start)
+            if initial_cond_grouping:
+                noises = []
+                noise_0 = th.randn_like(x_start[0])
+                for _ in range(x_start.shape[0]):
+                    noises.append(noise_0)
+                noise = th.stack(noises, dim=0)
+            else:
+                noise = th.randn_like(x_start)
         x_t = self.q_sample(x_start, t, noise=noise)
 
         terms = {}

@@ -17,6 +17,11 @@ from .nn import (
     normalization,
     timestep_embedding,
     checkpoint,
+    comp_decimal,
+    IE_decimal,
+    comp_to_index,
+    IE_to_index,
+    parameter_embedding
 )
 
 
@@ -476,9 +481,11 @@ class UNetModel(nn.Module):
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
 
         if self.num_classes is not None:
-            assert y.shape == (x.shape[0],)
-            emb = emb + self.label_emb(y)
-
+            kvals, ivals = y[:, 0], y[:, 1]
+            kemb = self.label_emb(kvals)
+            iemb = self.label_emb(ivals)
+            emb = emb + kemb + iemb
+            
         h = x.type(self.inner_dtype)
         for module in self.input_blocks:
             h = module(h, emb)
